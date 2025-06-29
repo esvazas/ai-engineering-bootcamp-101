@@ -47,9 +47,10 @@ ai-engineering-bootcamp-101/
    cd ai-engineering-bootcamp-101
    ```
 
-2. **Install dependencies**
+2. **Install dependencies with uv**
    ```bash
-   pip install -e .
+   uv sync
+   .venv\Scripts\activate
    ```
 
 3. **Set up environment variables**

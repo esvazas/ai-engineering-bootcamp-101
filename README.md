@@ -54,7 +54,7 @@ ai-engineering-bootcamp-101/
    ```
 
 3. **Set up environment variables**
-   Create a copy for `.env.copy` file and name it `.env` in the root directory with the following content:
+   Create a copy for `.env.example` file and name it `.env` in the root directory with the following content:
    ```bash
    OPENAI_API_KEY=your_openai_api_key
    GOOGLE_API_KEY=your_google_api_key

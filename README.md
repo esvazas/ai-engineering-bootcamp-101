@@ -1,4 +1,4 @@
-# AI Engineering Bootcamp 101
+# Amazon-UX Chatbot
 
 A comprehensive AI engineering project that demonstrates working with multiple LLM providers, data processing, and building interactive applications.
 

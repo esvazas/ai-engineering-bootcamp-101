@@ -2,9 +2,10 @@ import streamlit as st
 from openai import OpenAI
 from groq import Groq
 from google import genai
+from google.genai import types
 from core.config import config
 
-## Lets create a sidebar with a dropdown model list and provider list
+
 with st.sidebar:
     st.title("Chatbot UI")
 
@@ -12,13 +13,20 @@ with st.sidebar:
     provider = st.selectbox("Select a provider", provider_list)
     if provider == "openai":
         model_name = st.selectbox("Select a model",  ["gpt-4o-mini"])
+        temperature = st.slider("Temperature", min_value=0.0, max_value=1.0, value=0.5, step=0.1)
     elif provider == "groq":
         model_name = st.selectbox("Select a model", ["llama-3.1-8b-instant"])
+        temperature = st.slider("Temperature", min_value=0.0, max_value=1.0, value=0.5, step=0.1)
     elif provider == "google":
         model_name = st.selectbox("Select a model", ["gemini-2.0-flash"])
+        temperature = st.slider("Temperature", min_value=0.0, max_value=2.0, value=1.0, step=0.1)
+
+    max_tokens = st.slider("Max Tokens", min_value=100, max_value=1000, value=500, step=100)
 
     st.session_state.provider = provider
     st.session_state.model_name = model_name
+    st.session_state.temperature = temperature
+    st.session_state.max_tokens = max_tokens
 
 ## adjust line below for all providers
 if st.session_state.provider == "openai":
@@ -42,12 +50,17 @@ def run_llm(client, messages, max_tokens=500):
         return client.models.generate_content(
             model=st.session_state.model_name,
             contents=[message['content'] for message in messages],
+            config=types.GenerateContentConfig(
+                temperature=st.session_state.temperature,
+                max_output_tokens=st.session_state.max_tokens,
+            )
         ).text
     else:
         return client.chat.completions.create(
             model=st.session_state.model_name,
             messages=messages,
-            max_tokens=max_tokens
+            temperature=st.session_state.temperature,
+            max_tokens=st.session_state.max_tokens
         ).choices[0].message.content
 
 

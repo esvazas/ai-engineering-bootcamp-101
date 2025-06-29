@@ -1,0 +1,16 @@
+[project]
+name = "ai-engineering-bootcamp-101"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "google-genai>=1.23.0",
+    "groq>=0.29.0",
+    "ipykernel>=6.29.5",
+    "openai>=1.91.0",
+    "pandas>=2.3.0",
+    "pydantic>=2.11.7",
+    "pydantic-settings>=2.10.1",
+    "streamlit>=1.46.1",
+]

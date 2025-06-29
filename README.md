@@ -50,7 +50,7 @@ ai-engineering-bootcamp-101/
 2. **Install dependencies with uv**
    ```bash
    uv sync
-   .venv\Scripts\activate
+   source .venv\Scripts\activate
    ```
 
 3. **Set up environment variables**

@@ -1,4 +1,4 @@
-# Amazon-UX Chatbot
+# Amazon Ux Chatbot
 
 A comprehensive AI engineering project that demonstrates working with multiple LLM providers, data processing, and building interactive applications.
 

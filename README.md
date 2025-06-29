@@ -33,7 +33,7 @@ ai-engineering-bootcamp-101/
 
 ### Prerequisites
 
-- Python 3.11 or higher
+- Python 3.11+
 - API keys for:
   - OpenAI
   - Google Gemini
@@ -82,38 +82,11 @@ streamlit run src/chatbot-ui/streamlit_app.py
 
 The chatbot UI will be available at `http://localhost:8501`
 
-### Features of the Chatbot UI
-
-- **Provider Selection**: Choose between OpenAI, Google Gemini, or Groq
-- **Model Selection**: Different models available for each provider
-- **Parameter Tuning**: Adjust temperature and max tokens
-- **Real-time Chat**: Interactive conversation with selected LLM
-
-### Working with Jupyter Notebooks
-
-1. **LLM Exploration** (`notebooks/00-explore-llm-calls.ipynb`)
-   - Learn how to make API calls to different LLM providers
-   - Compare responses from OpenAI, Google Gemini, and Groq
-
-2. **Amazon Dataset Analysis** (`notebooks/01-explore-amazon-dataset.ipynb`)
-   - Process Amazon Electronics review data
-   - Filter data by date and category
-   - Analyze rating distributions
-
-## 📊 Dataset
-
-The project includes Amazon Electronics review data from 2022-2023. The data is processed and filtered to include:
-- Products available from 2022 onwards
-- Items with and without main categories
-- Rating information and metadata
 
 ## 🔧 Configuration
 
 Configuration is managed through `src/chatbot-ui/core/config.py` using Pydantic settings. The system automatically loads environment variables for API keys.
 
-## 📄 License
-
-This project is part of an AI Engineering Bootcamp curriculum.
 
 ---
 

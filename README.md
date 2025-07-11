@@ -19,7 +19,7 @@ ai-engineering-bootcamp-101/
 │   ├── 00-explore-llm-calls.ipynb
 │   └── 01-explore-amazon-dataset.ipynb
 ├── src/
-│   └── chatbot-ui/               # Streamlit chatbot application
+│   └── chatbot_ui/               # Streamlit chatbot application
 │       ├── core/
 │       │   └── config.py         # Configuration management
 │       └── streamlit_app.py      # Main Streamlit app
@@ -78,7 +78,7 @@ make run-docker-streamlit
 
 **Option 3: Manual Streamlit run**
 ```bash
-streamlit run src/chatbot-ui/streamlit_app.py
+streamlit run src/chatbot_ui/streamlit_app.py
 ```
 
 The chatbot UI will be available at `http://localhost:8501`

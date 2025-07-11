@@ -12,5 +12,10 @@ dependencies = [
     "pandas>=2.3.0",
     "pydantic>=2.11.7",
     "pydantic-settings>=2.10.1",
+    "qdrant-client>=1.14.3",
     "streamlit>=1.46.1",
+    "qdrant-client>=1.14.3",
+    "langsmith>=0.2.1",
+    "ragas>=0.2.12",
+    "rapidfuzz"
 ]

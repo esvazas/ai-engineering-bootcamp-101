@@ -46,9 +46,11 @@ LANGSMITH_API_KEY=your_langsmith_api_key
 ### Run the System
 
 # Run the complete system (includes Qdrant, chatbot, and evaluation)
+```
 make run-docker-compose
-
+```
 # Or run evaluation component:
+```
 make run-eval
 ```
 

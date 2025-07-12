@@ -3,7 +3,7 @@ import openai
 from qdrant_client import QdrantClient
 from langsmith import traceable, get_current_run_tree
 
-from chatbot_ui.core.config import config
+from core.config import config
 
 
 @traceable(

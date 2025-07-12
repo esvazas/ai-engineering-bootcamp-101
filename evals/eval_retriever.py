@@ -13,36 +13,45 @@ from ragas.embeddings import LangchainEmbeddingsWrapper
 
 
 ls_client = Client(api_key=config.LANGSMITH_API_KEY)
-qdrant_client = QdrantClient(
-    url=f"http://localhost:6333"
-)
+qdrant_client = QdrantClient(url=f"http://localhost:6333")
 
 from ragas.dataset_schema import SingleTurnSample
-from ragas.metrics import Faithfulness, ResponseRelevancy, LLMContextPrecisionWithoutReference, LLMContextRecall, NonLLMContextRecall
+from ragas.metrics import (
+    Faithfulness,
+    ResponseRelevancy,
+    LLMContextPrecisionWithoutReference,
+    LLMContextRecall,
+    NonLLMContextRecall,
+    FactualCorrectness,
+    SummarizationScore,
+)
 
 ragas_llm = LangchainLLMWrapper(ChatOpenAI(model="gpt-4.1"))
-ragas_embeddings = LangchainEmbeddingsWrapper(OpenAIEmbeddings(model="text-embedding-3-small"))
+ragas_embeddings = LangchainEmbeddingsWrapper(
+    OpenAIEmbeddings(model="text-embedding-3-small")
+)
 
 
 async def ragas_faithfulness(run, example):
 
     sample = SingleTurnSample(
-            user_input=run.outputs["question"],
-            response=run.outputs["answer"],
-            retrieved_contexts=run.outputs["retrieved_context"]
-        )
+        user_input=run.outputs["question"],
+        response=run.outputs["answer"],
+        retrieved_contexts=run.outputs["retrieved_context"],
+    )
     scorer = Faithfulness(llm=ragas_llm)
 
     return await scorer.single_turn_ascore(sample)
 
 
+
 async def ragas_responce_relevancy(run, example):
 
     sample = SingleTurnSample(
-            user_input=run.outputs["question"],
-            response=run.outputs["answer"],
-            retrieved_contexts=run.outputs["retrieved_context"]
-        )
+        user_input=run.outputs["question"],
+        response=run.outputs["answer"],
+        retrieved_contexts=run.outputs["retrieved_context"],
+    )
     scorer = ResponseRelevancy(llm=ragas_llm, embeddings=ragas_embeddings)
 
     return await scorer.single_turn_ascore(sample)
@@ -51,10 +60,10 @@ async def ragas_responce_relevancy(run, example):
 async def ragas_context_precision(run, example):
 
     sample = SingleTurnSample(
-            user_input=run.outputs["question"],
-            response=run.outputs["answer"],
-            retrieved_contexts=run.outputs["retrieved_context"]
-        )
+        user_input=run.outputs["question"],
+        response=run.outputs["answer"],
+        retrieved_contexts=run.outputs["retrieved_context"],
+    )
     scorer = LLMContextPrecisionWithoutReference(llm=ragas_llm)
 
     return await scorer.single_turn_ascore(sample)
@@ -63,11 +72,11 @@ async def ragas_context_precision(run, example):
 async def ragas_context_recall_llm_based(run, example):
 
     sample = SingleTurnSample(
-            user_input=run.outputs["question"],
-            response=run.outputs["answer"],
-            reference=example.outputs["ground_truth"],
-            retrieved_contexts=run.outputs["retrieved_context"]
-        )
+        user_input=run.outputs["question"],
+        response=run.outputs["answer"],
+        reference=example.outputs["ground_truth"],
+        retrieved_contexts=run.outputs["retrieved_context"],
+    )
     scorer = LLMContextRecall(llm=ragas_llm)
 
     return await scorer.single_turn_ascore(sample)
@@ -76,11 +85,36 @@ async def ragas_context_recall_llm_based(run, example):
 async def ragas_context_recall_non_llm(run, example):
 
     sample = SingleTurnSample(
-            retrieved_contexts=run.outputs["retrieved_context"],
-            reference_contexts=example.outputs["contexts"]
-        )
+        retrieved_contexts=run.outputs["retrieved_context"],
+        reference_contexts=example.outputs["contexts"],
+    )
     scorer = NonLLMContextRecall()
 
+    return await scorer.single_turn_ascore(sample)
+
+
+async def ragas_answer_factual_correctness(run, example):
+    """
+    Evaluates the factual accuracy of the answer compared to the ground truth.
+    """
+    sample = SingleTurnSample(
+        user_input=run.outputs["question"],
+        response=run.outputs["answer"],
+        reference=example.outputs["ground_truth"],
+    )
+    scorer = FactualCorrectness(llm=ragas_llm)
+    return await scorer.single_turn_ascore(sample)
+
+
+async def ragas_conciseness(run, example):
+    """
+    Evaluates how concise the generated answer is.
+    """
+    sample = SingleTurnSample(
+        user_input=run.outputs["question"],
+        response=run.outputs["answer"]
+    )
+    scorer = SummarizationScore(llm=ragas_llm)
     return await scorer.single_turn_ascore(sample)
 
 
@@ -92,7 +126,8 @@ results = ls_client.evaluate(
         ragas_responce_relevancy,
         ragas_context_precision,
         ragas_context_recall_llm_based,
-        ragas_context_recall_non_llm
+        ragas_context_recall_non_llm,
+        ragas_answer_factual_correctness,
     ],
-    experiment_prefix="rag-evaluation-dataset"
+    experiment_prefix="rag-evaluation-dataset",
 )

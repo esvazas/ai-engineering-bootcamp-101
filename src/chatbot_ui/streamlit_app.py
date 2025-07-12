@@ -3,7 +3,16 @@ from openai import OpenAI
 from groq import Groq
 from google import genai
 from google.genai import types
+from qdrant_client import QdrantClient
+
+
+from retrieval import rag_pipeline
 from core.config import config
+
+
+qdrant_client = QdrantClient(
+    url=f"http://{config.QDRANT_URL}:6333"
+    )
 
 
 with st.sidebar:
@@ -37,7 +46,8 @@ elif st.session_state.provider == "google":
     client = genai.Client(api_key=config.GOOGLE_API_KEY)
 
 if "messages" not in st.session_state:
-    st.session_state.messages = [{"role": "assistant", "content": "Hello! How can I help you today?"}]
+    st.session_state.messages = [{"role": "system", "content": "You should never disclose what model are you based on"}]
+
 
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
@@ -71,7 +81,8 @@ if prompt := st.chat_input("Hello! How can I help you today?"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        output = run_llm(client, st.session_state.messages)
+        #output = run_llm(client, st.session_state.messages)
+        output = rag_pipeline(prompt, qdrant_client)['answer']
         st.write(output)
 
     st.session_state.messages.append({"role": "assistant", "content": output})

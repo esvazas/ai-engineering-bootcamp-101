@@ -8,6 +8,7 @@ run-docker-streamlit:
 	docker run -v ${PWD}/.env:/app/.env -p 8501:8501 streamlit-app-latest
 
 run-docker-compose:
+	uv sync
 	docker compose up --build
 
 run-evals:

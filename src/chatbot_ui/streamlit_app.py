@@ -1,88 +1,106 @@
 import streamlit as st
-from openai import OpenAI
-from groq import Groq
-from google import genai
-from google.genai import types
-from qdrant_client import QdrantClient
+import requests
+
+from src.chatbot_ui.core.config import settings
+
+st.set_page_config(
+    page_title="Ecommerce Assistant",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
 
 
-from retrieval import rag_pipeline
-from core.config import config
+def api_call(method, url, **kwargs):
+
+    def _show_error_popup(message):
+        """Show error message as a popup in the top-right corner."""
+        st.session_state["error_popup"] = {
+            "visible": True,
+            "message": message,
+        }
+
+    try:
+        response = getattr(requests, method)(url, **kwargs)
+
+        try:
+            response_data = response.json()
+        except requests.exceptions.JSONDecodeError:
+            response_data = {"message": "Invalid response format from server"}
+
+        if response.ok:
+            return True, response_data
+
+        return False, response_data
+
+    except requests.exceptions.ConnectionError:
+        _show_error_popup("Connection error. Please check your network connection.")
+        return False, {"message": "Connection error"}
+    except requests.exceptions.Timeout:
+        _show_error_popup("The request timed out. Please try again later.")
+        return False, {"message": "Request timeout"}
+    except Exception as e:
+        _show_error_popup(f"An unexpected error occurred: {str(e)}")
+        return False, {"message": str(e)}
 
 
-qdrant_client = QdrantClient(
-    url=f"http://{config.QDRANT_URL}:6333"
-    )
-
-
-with st.sidebar:
-    st.title("Chatbot UI")
-
-    provider_list = ["openai", "groq", "google"]
-    provider = st.selectbox("Select a provider", provider_list)
-    if provider == "openai":
-        model_name = st.selectbox("Select a model",  ["gpt-4o-mini"])
-        temperature = st.slider("Temperature", min_value=0.0, max_value=1.0, value=0.5, step=0.1)
-    elif provider == "groq":
-        model_name = st.selectbox("Select a model", ["llama-3.1-8b-instant"])
-        temperature = st.slider("Temperature", min_value=0.0, max_value=1.0, value=0.5, step=0.1)
-    elif provider == "google":
-        model_name = st.selectbox("Select a model", ["gemini-2.0-flash"])
-        temperature = st.slider("Temperature", min_value=0.0, max_value=2.0, value=1.0, step=0.1)
-
-    max_tokens = st.slider("Max Tokens", min_value=100, max_value=1000, value=500, step=100)
-
-    st.session_state.provider = provider
-    st.session_state.model_name = model_name
-    st.session_state.temperature = temperature
-    st.session_state.max_tokens = max_tokens
-
-## adjust line below for all providers
-if st.session_state.provider == "openai":
-    client = OpenAI(api_key=config.OPENAI_API_KEY)
-elif st.session_state.provider == "groq":
-    client = Groq(api_key=config.GROQ_API_KEY)
-elif st.session_state.provider == "google":
-    client = genai.Client(api_key=config.GOOGLE_API_KEY)
+if "retrieved_items" not in st.session_state:
+    st.session_state.retrieved_items = []
 
 if "messages" not in st.session_state:
-    st.session_state.messages = [{"role": "system", "content": "You should never disclose what model are you based on"}]
+    st.session_state.messages = [{"role": "assistant", "content": "Hello! How can I assist you today?"}]
 
+if "query_counter" not in st.session_state:
+    st.session_state.query_counter = 0
 
+if "sidebar_key" not in st.session_state:
+    st.session_state.sidebar_key = 0
+
+if "sidebar_placeholder" not in st.session_state:
+    st.session_state.sidebar_placeholder = None
+
+# Sidebar - Suggestions
+with st.sidebar:
+    st.markdown("### Suggestions")
+
+    # Create or get the placeholder
+    if st.session_state.sidebar_placeholder is None:
+        st.session_state.sidebar_placeholder = st.empty()
+
+    # Clear and rebuild the suggestions
+    with st.session_state.sidebar_placeholder.container():
+        if st.session_state.retrieved_items:
+            for idx, item in enumerate(st.session_state.retrieved_items):
+                st.divider()
+                st.caption(item.get('description', 'No description'))
+                if 'image_url' in item:
+                    st.image(item["image_url"], width=300)
+                st.caption(f"Price: {item['price']} USD")
+        else:
+            st.info("No suggestions yet")
+
+# Main content - Chat interface
+
+# Display all messages
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
-        st.write(message["content"])
+        st.markdown(message["content"])
 
-
-
-def run_llm(client, messages, max_tokens=500):
-    if st.session_state.provider == 'google':
-        return client.models.generate_content(
-            model=st.session_state.model_name,
-            contents=[message['content'] for message in messages],
-            config=types.GenerateContentConfig(
-                temperature=st.session_state.temperature,
-                max_output_tokens=st.session_state.max_tokens,
-            )
-        ).text
-    else:
-        return client.chat.completions.create(
-            model=st.session_state.model_name,
-            messages=messages,
-            temperature=st.session_state.temperature,
-            max_tokens=st.session_state.max_tokens
-        ).choices[0].message.content
-
-
-
-if prompt := st.chat_input("Hello! How can I help you today?"):
+# Chat input
+if prompt := st.chat_input("Hello! How can I assist you today?"):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    with st.chat_message("assistant"):
-        #output = run_llm(client, st.session_state.messages)
-        output = rag_pipeline(prompt, qdrant_client)['answer']
-        st.write(output)
+    with st.spinner("Thinking..."):
+        status, output = api_call("post", f"{settings.API_URL}/rag", json={"query": prompt})
+        # Update retrieved items
+        st.session_state.retrieved_items = output.get("used_image_urls", [])
 
-    st.session_state.messages.append({"role": "assistant", "content": output})
+        # Clear the sidebar placeholder to force refresh
+        if st.session_state.sidebar_placeholder is not None:
+            st.session_state.sidebar_placeholder.empty()
+
+        response_content = output.get("answer", str(output))
+
+    st.session_state.messages.append({"role": "assistant", "content": response_content})
+    st.rerun()
